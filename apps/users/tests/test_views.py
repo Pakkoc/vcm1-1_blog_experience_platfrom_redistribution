@@ -62,7 +62,7 @@ class TestSignupView:
         response = client.post('/accounts/signup/', form_data)
 
         assert response.status_code == 302  # Redirect
-        assert response.url == '/'
+        assert response.url == '/manage/campaigns/'  # 광고주는 체험단 관리로 리디렉션
 
         # Verify user was created
         assert User.objects.filter(email='advertiser@test.com').exists()

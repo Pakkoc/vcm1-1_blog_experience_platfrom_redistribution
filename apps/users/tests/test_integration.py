@@ -73,9 +73,9 @@ class TestSignupIntegration:
         }
         response = client.post('/accounts/signup/', form_data, follow=True)
 
-        # 3. Verify redirection
+        # 3. Verify redirection (광고주는 체험단 관리 페이지로 리디렉션)
         assert response.status_code == 200
-        assert response.redirect_chain[-1][0] == '/'
+        assert response.redirect_chain[-1][0] == '/manage/campaigns/'
 
         # 4. Verify database records
         user = User.objects.get(email='advertiser@integration.com')

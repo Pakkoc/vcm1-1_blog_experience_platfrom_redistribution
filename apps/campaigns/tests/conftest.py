@@ -20,6 +20,13 @@ def advertiser_user(db):
         contact='010-1234-5678',
         role='advertiser'
     )
+    # Create advertiser profile
+    from apps.users.models import AdvertiserProfile
+    AdvertiserProfile.objects.create(
+        user=user,
+        company_name='Test Company',
+        business_registration_number='123-45-67890'
+    )
     return user
 
 
@@ -32,6 +39,13 @@ def other_advertiser_user(db):
         name='Other Advertiser',
         contact='010-9999-8888',
         role='advertiser'
+    )
+    # Create advertiser profile
+    from apps.users.models import AdvertiserProfile
+    AdvertiserProfile.objects.create(
+        user=user,
+        company_name='Other Company',
+        business_registration_number='987-65-43210'
     )
     return user
 

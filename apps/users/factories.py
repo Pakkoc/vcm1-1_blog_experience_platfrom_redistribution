@@ -26,13 +26,40 @@ class UserFactory(DjangoModelFactory):
 
 
 class AdvertiserFactory(UserFactory):
-    """Factory for Advertiser User"""
+    """Factory for Advertiser User with profile"""
     role = 'advertiser'
+
+    @factory.post_generation
+    def advertiser_profile(obj, create, extracted, **kwargs):
+        """Create advertiser profile after user creation"""
+        if not create:
+            return
+
+        if not hasattr(obj, 'advertiser_profile'):
+            AdvertiserProfile.objects.create(
+                user=obj,
+                company_name=kwargs.get('company_name', f'{obj.name}의 회사'),
+                business_registration_number=kwargs.get('business_registration_number', '123-45-67890')
+            )
 
 
 class InfluencerFactory(UserFactory):
-    """Factory for Influencer User"""
+    """Factory for Influencer User with profile"""
     role = 'influencer'
+
+    @factory.post_generation
+    def influencer_profile(obj, create, extracted, **kwargs):
+        """Create influencer profile after user creation"""
+        if not create:
+            return
+
+        if not hasattr(obj, 'influencer_profile'):
+            import datetime
+            InfluencerProfile.objects.create(
+                user=obj,
+                birth_date=kwargs.get('birth_date', datetime.date(1990, 1, 1)),
+                sns_link=kwargs.get('sns_link', 'https://blog.naver.com/test')
+            )
 
 
 class AdvertiserProfileFactory(DjangoModelFactory):
