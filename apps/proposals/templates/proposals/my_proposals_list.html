@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}내 지원 목록 - 체험단 매칭 플랫폼{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">내 지원 목록</h2>
+            {% if has_proposals %}
+                <p class="text-muted">총 {{ proposals|length }}건</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if has_proposals %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for proposal in proposals %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <!-- Status Badge -->
+                            <div class="mb-2">
+                                {% if proposal.status == 'submitted' %}
+                                    <span class="badge bg-primary">신청완료</span>
+                                {% elif proposal.status == 'selected' %}
+                                    <span class="badge bg-success">선정</span>
+                                {% elif proposal.status == 'rejected' %}
+                                    <span class="badge bg-secondary">반려</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Campaign Name -->
+                            <h5 class="card-title">
+                                <a href="{% url 'campaigns:detail' proposal.campaign.id %}"
+                                   class="text-decoration-none text-dark">
+                                    {{ proposal.campaign.name }}
+                                </a>
+                            </h5>
+
+                            <!-- Proposal Information -->
+                            <div class="card-text text-muted small">
+                                <p class="mb-1">
+                                    <i class="bi bi-calendar-event"></i>
+                                    지원일: {{ proposal.created_at|date:"Y년 m월 d일" }}
+                                </p>
+                                <p class="mb-1">
+                                    <i class="bi bi-calendar-check"></i>
+                                    방문 희망일: {{ proposal.desired_visit_date|date:"Y년 m월 d일" }}
+                                </p>
+                            </div>
+
+                            <!-- Cover Letter Preview -->
+                            <p class="card-text mt-2">
+                                <small class="text-muted">
+                                    {{ proposal.cover_letter|truncatewords:10 }}
+                                </small>
+                            </p>
+                        </div>
+
+                        <div class="card-footer bg-white border-0">
+                            <a href="{% url 'campaigns:detail' proposal.campaign.id %}"
+                               class="btn btn-sm btn-outline-primary w-100">
+                                체험단 상세 보기
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State UI -->
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <h4 class="mt-4 text-muted">아직 지원한 체험단이 없습니다</h4>
+            <p class="text-muted">다양한 체험단에 지원하고 새로운 경험을 시작해보세요!</p>
+            <a href="{% url 'campaigns:home' %}" class="btn btn-primary mt-3">
+                체험단 둘러보기
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+{% endblock %}

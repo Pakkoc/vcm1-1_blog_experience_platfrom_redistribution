@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ campaign.name }} - 지원자 관리{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Campaign Status Badge -->
+    <div class="row mb-3">
+        <div class="col">
+            <h2>{{ campaign.name }}</h2>
+            {% if campaign.status == 'recruiting' %}
+                <span class="badge bg-success">모집 중</span>
+            {% elif campaign.status == 'recruitment_ended' %}
+                <span class="badge bg-secondary">모집 종료</span>
+            {% elif campaign.status == 'selection_complete' %}
+                <span class="badge bg-primary">선정 완료</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Campaign Basic Information -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">캠페인 정보</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>모집 기간:</strong> {{ campaign.recruitment_start_date }} ~ {{ campaign.recruitment_end_date }}</p>
+                    <p><strong>모집 인원:</strong> {{ campaign.recruitment_count }}명</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>전체 지원자:</strong> {{ campaign.total_proposals }}명</p>
+                    <p><strong>신청 완료:</strong> {{ campaign.submitted_proposals }}명</p>
+                    {% if campaign.status == 'selection_complete' %}
+                        <p><strong>선정:</strong> {{ campaign.selected_proposals }}명</p>
+                        <p><strong>반려:</strong> {{ campaign.rejected_proposals }}명</p>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+            <p><strong>제공 혜택:</strong></p>
+            <p>{{ campaign.benefits|linebreaks }}</p>
+            <p><strong>미션:</strong></p>
+            <p>{{ campaign.mission|linebreaks }}</p>
+        </div>
+    </div>
+
+    <!-- Action Button Area -->
+    <div class="mb-3">
+        {% if can_close %}
+            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#closeModal">
+                모집 종료
+            </button>
+        {% endif %}
+
+        {% if can_select %}
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#selectModal">
+                체험단 선정
+            </button>
+        {% endif %}
+
+        {% if is_complete %}
+            <button type="button" class="btn btn-secondary" disabled>
+                선정 완료됨
+            </button>
+        {% endif %}
+
+        <a href="{% url 'campaigns:advertiser_list' %}" class="btn btn-outline-secondary">
+            목록으로
+        </a>
+    </div>
+
+    <!-- Proposals List Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">지원자 목록 ({{ proposals|length }}명)</h5>
+        </div>
+        <div class="card-body">
+            {% if proposals %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>이름</th>
+                                <th>연락처</th>
+                                <th>SNS</th>
+                                <th>각오 한마디</th>
+                                <th>방문 희망일</th>
+                                <th>지원일</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for proposal in proposals %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ proposal.influencer_name }}</td>
+                                    <td>{{ proposal.influencer_contact }}</td>
+                                    <td>
+                                        <a href="{{ proposal.sns_link }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            SNS 보기
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="d-inline-block text-truncate" style="max-width: 200px;" title="{{ proposal.cover_letter }}">
+                                            {{ proposal.cover_letter }}
+                                        </span>
+                                    </td>
+                                    <td>{{ proposal.desired_visit_date }}</td>
+                                    <td>{{ proposal.created_at }}</td>
+                                    <td>
+                                        {% if proposal.status == 'submitted' %}
+                                            <span class="badge bg-info">신청완료</span>
+                                        {% elif proposal.status == 'selected' %}
+                                            <span class="badge bg-success">선정</span>
+                                        {% elif proposal.status == 'rejected' %}
+                                            <span class="badge bg-secondary">반려</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <p class="text-muted">아직 지원자가 없습니다.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Close Recruitment Confirmation Modal -->
+<div class="modal fade" id="closeModal" tabindex="-1" aria-labelledby="closeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="closeModalLabel">모집 종료 확인</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>모집을 종료하시겠습니까?</p>
+                <p class="text-danger small">
+                    종료 후에는 추가 지원자를 받을 수 없습니다.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <form method="POST" action="{% url 'campaigns:close_recruitment' campaign.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">확인</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Influencer Selection Modal -->
+<div class="modal fade" id="selectModal" tabindex="-1" aria-labelledby="selectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="selectModalLabel">
+                    체험단 선정 (모집인원: {{ campaign.recruitment_count }}명)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="selectionForm" method="POST" action="{% url 'campaigns:select_influencers' campaign.id %}">
+                    {% csrf_token %}
+
+                    <div class="alert alert-info">
+                        현재 <strong id="selectedCount">0</strong>/{{ campaign.recruitment_count }}명 선택됨
+                    </div>
+
+                    {% if proposals %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <input type="checkbox" id="selectAll" class="form-check-input">
+                                        </th>
+                                        <th>이름</th>
+                                        <th>SNS</th>
+                                        <th>각오 한마디</th>
+                                        <th>방문 희망일</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for proposal in proposals %}
+                                        {% if proposal.status == 'submitted' %}
+                                            <tr>
+                                                <td>
+                                                    <input
+                                                        type="checkbox"
+                                                        name="selected_proposals[]"
+                                                        value="{{ proposal.proposal_id }}"
+                                                        class="form-check-input proposal-checkbox"
+                                                    >
+                                                </td>
+                                                <td>{{ proposal.influencer_name }}</td>
+                                                <td>
+                                                    <a href="{{ proposal.sns_link }}" target="_blank" class="btn btn-sm btn-link">
+                                                        보기
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <span class="d-inline-block text-truncate" style="max-width: 150px;" title="{{ proposal.cover_letter }}">
+                                                        {{ proposal.cover_letter }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ proposal.desired_visit_date }}</td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">선택 가능한 지원자가 없습니다.</p>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="confirmSelection"
+                    onclick="confirmAndSubmit()"
+                >
+                    선정 완료
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update selected count
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.proposal-checkbox:checked');
+    const count = checkboxes.length;
+    const maxCount = {{ campaign.recruitment_count }};
+
+    document.getElementById('selectedCount').textContent = count;
+
+    const alertDiv = document.querySelector('#selectModal .alert');
+    if (count > maxCount) {
+        alertDiv.classList.remove('alert-info');
+        alertDiv.classList.add('alert-danger');
+        alertDiv.innerHTML = `<strong>경고:</strong> 현재 ${count}명 선택됨 (모집 인원 ${maxCount}명 초과)`;
+    } else {
+        alertDiv.classList.remove('alert-danger');
+        alertDiv.classList.add('alert-info');
+        alertDiv.innerHTML = `현재 <strong>${count}</strong>/${maxCount}명 선택됨`;
+    }
+}
+
+// Checkbox event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.proposal-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+
+    // Select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedCount();
+        });
+    }
+});
+
+// Confirm and submit selection
+function confirmAndSubmit() {
+    const checkboxes = document.querySelectorAll('.proposal-checkbox:checked');
+    const count = checkboxes.length;
+    const maxCount = {{ campaign.recruitment_count }};
+
+    if (count === 0) {
+        alert('최소 1명 이상의 지원자를 선택해야 합니다.');
+        return;
+    }
+
+    if (count > maxCount) {
+        alert(`모집 인원(${maxCount}명)을 초과하여 선택할 수 없습니다.\n현재 ${count}명이 선택되었습니다.`);
+        return;
+    }
+
+    const message = `선정된 ${count}명에게 선정 알림이 전달되며, 나머지는 반려 처리됩니다.\n계속하시겠습니까?`;
+
+    if (confirm(message)) {
+        document.getElementById('selectionForm').submit();
+    }
+}
+</script>
+{% endblock %}

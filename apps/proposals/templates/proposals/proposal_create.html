@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}체험단 지원하기 - {{ campaign.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Page Header -->
+            <h2 class="mb-4">체험단 지원하기</h2>
+
+            <!-- Campaign Info Card (Read-only) -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ campaign.name }}</h5>
+                    <p class="card-text text-muted">{{ campaign.benefits|truncatewords:20 }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar"></i>
+                                모집기간: {{ campaign.recruitment_start_date }} ~ {{ campaign.recruitment_end_date }}
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <i class="bi bi-people"></i>
+                                모집인원: {{ campaign.recruitment_count }}명
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proposal Form Card -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Cover Letter -->
+                        <div class="mb-3">
+                            <label for="{{ form.cover_letter.id_for_label }}" class="form-label">
+                                {{ form.cover_letter.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.cover_letter }}
+                            {% if form.cover_letter.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.cover_letter.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                이 체험단에 선정되어야 하는 이유를 간단히 작성해주세요. (최대 500자)
+                            </div>
+                        </div>
+
+                        <!-- Desired Visit Date -->
+                        <div class="mb-4">
+                            <label for="{{ form.desired_visit_date.id_for_label }}" class="form-label">
+                                {{ form.desired_visit_date.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.desired_visit_date }}
+                            {% if form.desired_visit_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.desired_visit_date.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                오늘 이후 날짜를 선택해주세요.
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'campaigns:detail' campaign.id %}" class="btn btn-secondary">
+                                취소
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                제출하기
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

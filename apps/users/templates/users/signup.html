@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}회원가입 - 체험단 매칭 플랫폼{% endblock %}
+
+{% block extra_css %}
+<style>
+    .signup-container {
+        max-width: 600px;
+        margin: 50px auto;
+    }
+    .conditional-fields {
+        display: none;
+    }
+    .conditional-fields.active {
+        display: block;
+    }
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="signup-container">
+    <h2 class="text-center mb-4">회원가입</h2>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- 공통 정보 섹션 -->
+        <div class="card mb-3">
+            <div class="card-header">기본 정보</div>
+            <div class="card-body">
+                <!-- 이름 -->
+                <div class="mb-3">
+                    <label for="id_name" class="form-label">이름 *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="invalid-feedback d-block">{{ form.name.errors|first }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- 이메일 -->
+                <div class="mb-3">
+                    <label for="id_email" class="form-label">이메일 *</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="invalid-feedback d-block">{{ form.email.errors|first }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- 연락처 -->
+                <div class="mb-3">
+                    <label for="id_contact" class="form-label">연락처 *</label>
+                    {{ form.contact }}
+                    <small class="form-text text-muted">예: 010-1234-5678</small>
+                    {% if form.contact.errors %}
+                        <div class="invalid-feedback d-block">{{ form.contact.errors|first }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- 비밀번호 -->
+                <div class="mb-3">
+                    <label for="id_password" class="form-label">비밀번호 *</label>
+                    {{ form.password }}
+                    <small class="form-text text-muted">최소 8자, 영문+숫자 조합</small>
+                    {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">{{ form.password.errors|first }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- 비밀번호 확인 -->
+                <div class="mb-3">
+                    <label for="id_password_confirm" class="form-label">비밀번호 확인 *</label>
+                    {{ form.password_confirm }}
+                    {% if form.password_confirm.errors %}
+                        <div class="invalid-feedback d-block">{{ form.password_confirm.errors|first }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 역할 선택 섹션 -->
+        <div class="card mb-3">
+            <div class="card-header">역할 선택</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    {% for choice in form.role %}
+                        <div class="form-check">
+                            {{ choice.tag }}
+                            <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                {{ choice.choice_label }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                    {% if form.role.errors %}
+                        <div class="invalid-feedback d-block">{{ form.role.errors|first }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 광고주 전용 필드 -->
+        <div class="card mb-3 conditional-fields" id="advertiser-fields">
+            <div class="card-header">광고주 정보</div>
+            <div class="card-body">
+                <!-- 업체명 -->
+                <div class="mb-3">
+                    <label for="id_company_name" class="form-label">업체명 *</label>
+                    {{ form.company_name }}
+                    {% if form.company_name.errors %}
+                        <div class="invalid-feedback d-block">{{ form.company_name.errors|first }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- 사업자등록번호 -->
+                <div class="mb-3">
+                    <label for="id_business_registration_number" class="form-label">사업자등록번호 *</label>
+                    {{ form.business_registration_number }}
+                    <small class="form-text text-muted">예: 123-45-67890</small>
+                    {% if form.business_registration_number.errors %}
+                        <div class="invalid-feedback d-block">{{ form.business_registration_number.errors|first }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 인플루언서 전용 필드 -->
+        <div class="card mb-3 conditional-fields" id="influencer-fields">
+            <div class="card-header">인플루언서 정보</div>
+            <div class="card-body">
+                <!-- 생년월일 -->
+                <div class="mb-3">
+                    <label for="id_birth_date" class="form-label">생년월일 *</label>
+                    {{ form.birth_date }}
+                    <small class="form-text text-muted">만 14세 이상만 가입 가능</small>
+                    {% if form.birth_date.errors %}
+                        <div class="invalid-feedback d-block">{{ form.birth_date.errors|first }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- SNS 링크 -->
+                <div class="mb-3">
+                    <label for="id_sns_link" class="form-label">SNS 채널 링크 *</label>
+                    {{ form.sns_link }}
+                    <small class="form-text text-muted">예: https://blog.naver.com/username</small>
+                    {% if form.sns_link.errors %}
+                        <div class="invalid-feedback d-block">{{ form.sns_link.errors|first }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 약관 동의 -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-check">
+                    {{ form.terms_agreed }}
+                    <label class="form-check-label" for="id_terms_agreed">
+                        이용약관 및 개인정보처리방침에 동의합니다 (필수)
+                    </label>
+                    {% if form.terms_agreed.errors %}
+                        <div class="invalid-feedback d-block">{{ form.terms_agreed.errors|first }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <!-- 제출 버튼 -->
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">회원가입</button>
+        </div>
+
+        <div class="text-center mt-3">
+            <p>이미 계정이 있으신가요? <a href="#">로그인</a></p>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleRadios = document.querySelectorAll('input[name="role"]');
+        const advertiserFields = document.getElementById('advertiser-fields');
+        const influencerFields = document.getElementById('influencer-fields');
+
+        function toggleRoleFields() {
+            const selectedRole = document.querySelector('input[name="role"]:checked');
+
+            if (selectedRole) {
+                if (selectedRole.value === 'advertiser') {
+                    advertiserFields.classList.add('active');
+                    influencerFields.classList.remove('active');
+
+                    // 광고주 필드 required 활성화
+                    document.getElementById('id_company_name').required = true;
+                    document.getElementById('id_business_registration_number').required = true;
+
+                    // 인플루언서 필드 required 비활성화
+                    document.getElementById('id_birth_date').required = false;
+                    document.getElementById('id_sns_link').required = false;
+                } else if (selectedRole.value === 'influencer') {
+                    advertiserFields.classList.remove('active');
+                    influencerFields.classList.add('active');
+
+                    // 인플루언서 필드 required 활성화
+                    document.getElementById('id_birth_date').required = true;
+                    document.getElementById('id_sns_link').required = true;
+
+                    // 광고주 필드 required 비활성화
+                    document.getElementById('id_company_name').required = false;
+                    document.getElementById('id_business_registration_number').required = false;
+                }
+            }
+        }
+
+        roleRadios.forEach(radio => {
+            radio.addEventListener('change', toggleRoleFields);
+        });
+
+        // 페이지 로드 시 초기 상태 설정
+        toggleRoleFields();
+    });
+</script>
+{% endblock %}

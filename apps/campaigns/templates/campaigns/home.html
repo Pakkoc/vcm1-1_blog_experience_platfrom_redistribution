@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}홈 - 체험단 매칭 플랫폼{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">모집 중인 체험단</h1>
+    </div>
+</div>
+
+<!-- 상단 배너: 가장 최근 등록된 체험단 -->
+{% if featured_campaign %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-primary shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">최신 체험단</h5>
+            </div>
+            <div class="card-body">
+                <h4 class="card-title">{{ featured_campaign.name }}</h4>
+                <p class="card-text">
+                    <strong>광고주:</strong> {{ featured_campaign.advertiser.name }}<br>
+                    <strong>모집 인원:</strong> {{ featured_campaign.recruitment_count }}명<br>
+                    <strong>모집 기간:</strong>
+                    {{ featured_campaign.recruitment_start_date|date:"Y.m.d" }} ~
+                    {{ featured_campaign.recruitment_end_date|date:"Y.m.d" }}
+                </p>
+                <p class="card-text">{{ featured_campaign.benefits|truncatewords:30 }}</p>
+                <a href="#" class="btn btn-primary btn-lg">자세히 보기</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 체험단 목록 -->
+<div class="row">
+    {% if campaigns %}
+        {% for campaign in campaigns %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ campaign.name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        {{ campaign.advertiser.name }}
+                    </h6>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            모집 인원: {{ campaign.recruitment_count }}명<br>
+                            모집 마감: {{ campaign.recruitment_end_date|date:"Y.m.d" }}
+                        </small>
+                    </p>
+                    <p class="card-text">{{ campaign.benefits|truncatewords:15 }}</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="#" class="btn btn-outline-primary btn-sm w-100">
+                        상세 보기
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center" role="alert">
+                <h4>현재 모집 중인 체험단이 없습니다.</h4>
+                <p class="mb-0">곧 새로운 체험단이 등록될 예정입니다.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
