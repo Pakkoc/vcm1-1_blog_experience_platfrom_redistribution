@@ -16,18 +16,21 @@
                         </li>
                     {% elif user.role == 'advertiser' %}
                         <li class="nav-item">
-                            <a class="nav-link" href="#">체험단 관리</a>
+                            <a class="nav-link" href="{% url 'campaigns:management' %}">체험단 관리</a>
                         </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#">로그아웃</a>
+                        <form method="post" action="{% url 'users:logout' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link btn btn-link">로그아웃</button>
+                        </form>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#">로그인</a>
+                        <a class="nav-link" href="{% url 'users:login' %}">로그인</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">회원가입</a>
+                        <a class="nav-link" href="{% url 'users:signup' %}">회원가입</a>
                     </li>
                 {% endif %}
             </ul>
