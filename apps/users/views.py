@@ -63,7 +63,7 @@ class SignupView(View):
 
             # Role-based redirection
             if user.role == 'advertiser':
-                return redirect('campaigns:management')
+                return redirect('campaigns:manage')
             else:
                 return redirect('campaigns:home')
 
@@ -111,7 +111,7 @@ class LoginView(View):
             if next_url:
                 return redirect(next_url)
             elif user.role == 'advertiser':
-                return redirect('campaigns:management')
+                return redirect('campaigns:manage')
             else:
                 return redirect('campaigns:home')
         else:
