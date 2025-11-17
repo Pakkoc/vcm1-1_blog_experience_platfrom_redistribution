@@ -46,6 +46,9 @@ SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
-# Static files
+# Static files - WhiteNoise configuration
 STATIC_ROOT = '/app/staticfiles'
 STATIC_URL = '/static/'
+
+# WhiteNoise - Serve static files without collectstatic
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
