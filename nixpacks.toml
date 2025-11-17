@@ -1,11 +1,2 @@
-[phases.setup]
-nixPkgs = ["python313"]
-
-[phases.install]
-cmds = ["pip install -r requirements.txt"]
-
-[phases.build]
-cmds = ["python manage.py collectstatic --noinput"]
-
 [start]
-cmd = "gunicorn config.wsgi:application"
+cmd = "bash start.sh"
