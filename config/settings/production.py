@@ -8,7 +8,9 @@ from decouple import config
 
 DEBUG = False
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost').split(',')
+# ALLOWED_HOSTS: Split by comma, strip whitespace, and add Railway domains
+allowed_hosts = config('ALLOWED_HOSTS', default='*').split(',')
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts]
 
 # Database Configuration
 # Railway provides DATABASE_URL when PostgreSQL is added
