@@ -33,9 +33,11 @@
             </div>
 
             <!-- Proposal Form Card -->
-            <div class="card">
+            <div class="card" x-data="{ submitting: false, charCount: 0 }">
                 <div class="card-body">
-                    <form method="post" novalidate>
+                    <form method="post" novalidate
+                          @submit="submitting = true"
+                          data-loading="true">
                         {% csrf_token %}
 
                         <!-- Cover Letter -->
@@ -43,15 +45,27 @@
                             <label for="{{ form.cover_letter.id_for_label }}" class="form-label">
                                 {{ form.cover_letter.label }} <span class="text-danger">*</span>
                             </label>
-                            {{ form.cover_letter }}
+                            <textarea
+                                name="{{ form.cover_letter.name }}"
+                                id="{{ form.cover_letter.id_for_label }}"
+                                class="form-control {% if form.cover_letter.errors %}is-invalid{% endif %}"
+                                rows="6"
+                                maxlength="500"
+                                required
+                                x-model="charCount"
+                                @input="charCount = $event.target.value.length">{{ form.cover_letter.value|default:'' }}</textarea>
+
+                            <!-- 글자 수 카운터 -->
+                            <div class="form-text d-flex justify-content-between">
+                                <span>이 체험단에 선정되어야 하는 이유를 간단히 작성해주세요.</span>
+                                <span x-text="charCount + ' / 500'"></span>
+                            </div>
+
                             {% if form.cover_letter.errors %}
                                 <div class="invalid-feedback d-block">
                                     {{ form.cover_letter.errors.0 }}
                                 </div>
                             {% endif %}
-                            <div class="form-text">
-                                이 체험단에 선정되어야 하는 이유를 간단히 작성해주세요. (최대 500자)
-                            </div>
                         </div>
 
                         <!-- Desired Visit Date -->
@@ -75,8 +89,12 @@
                             <a href="{% url 'campaigns:detail' campaign.id %}" class="btn btn-secondary">
                                 취소
                             </a>
-                            <button type="submit" class="btn btn-primary">
-                                제출하기
+                            <button type="submit" class="btn btn-primary" :disabled="submitting">
+                                <span x-show="!submitting">제출하기</span>
+                                <span x-show="submitting">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    제출 중...
+                                </span>
                             </button>
                         </div>
                     </form>

@@ -41,14 +41,70 @@
 </section>
 
 <!-- 현재 모집 중인 체험단 섹션 -->
-<section id="campaigns-section" class="mb-5">
+<section id="campaigns-section" class="mb-5" x-data="{
+    searchQuery: '',
+    sortBy: 'latest',
+    get filteredCampaigns() {
+        let campaigns = Array.from(document.querySelectorAll('.campaign-card'));
+
+        // 검색 필터
+        if (this.searchQuery) {
+            campaigns = campaigns.filter(card => {
+                const title = card.dataset.title.toLowerCase();
+                const advertiser = card.dataset.advertiser.toLowerCase();
+                const query = this.searchQuery.toLowerCase();
+                return title.includes(query) || advertiser.includes(query);
+            });
+        }
+
+        return campaigns;
+    },
+    filterCampaigns() {
+        const allCampaigns = document.querySelectorAll('.campaign-card');
+        const filtered = this.filteredCampaigns;
+
+        allCampaigns.forEach(card => {
+            card.parentElement.style.display = filtered.includes(card) ? 'block' : 'none';
+        });
+
+        // 빈 상태 메시지 표시
+        const emptyState = document.getElementById('empty-campaigns');
+        if (emptyState) {
+            emptyState.style.display = filtered.length === 0 ? 'block' : 'none';
+        }
+    }
+}">
     <div class="container">
         <h2 class="text-center mb-4">현재 모집 중인 체험단</h2>
+
+        {% if campaigns %}
+        <!-- 검색 및 필터 -->
+        <div class="row mb-4">
+            <div class="col-md-8 mx-auto">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </span>
+                    <input type="text"
+                           class="form-control"
+                           placeholder="체험단명 또는 광고주명으로 검색..."
+                           x-model="searchQuery"
+                           @input.debounce.300ms="filterCampaigns()">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="row">
             {% if campaigns %}
                 {% for campaign in campaigns %}
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm">
+                    <div class="card h-100 shadow-sm campaign-card"
+                         data-title="{{ campaign.name }}"
+                         data-advertiser="{{ campaign.advertiser.name }}"
+                         data-date="{{ campaign.recruitment_end_date|date:'Y-m-d' }}">
                         <div class="card-body">
                             <h5 class="card-title">{{ campaign.name }}</h5>
                             <h6 class="card-subtitle mb-2 text-muted">
@@ -70,6 +126,14 @@
                     </div>
                 </div>
                 {% endfor %}
+
+                <!-- 검색 결과 없음 메시지 -->
+                <div class="col-12" id="empty-campaigns" style="display: none;">
+                    <div class="alert alert-warning text-center" role="alert">
+                        <h4>검색 결과가 없습니다.</h4>
+                        <p class="mb-0">다른 검색어로 시도해보세요.</p>
+                    </div>
+                </div>
             {% else %}
                 <div class="col-12">
                     <div class="alert alert-info text-center" role="alert">

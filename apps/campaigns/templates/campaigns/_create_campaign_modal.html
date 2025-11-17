@@ -1,7 +1,20 @@
 <div class="modal fade" id="createCampaignModal" tabindex="-1" aria-labelledby="createCampaignModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form method="post" action="{% url 'campaigns:create' %}">
+        <div class="modal-content" x-data="{
+            submitting: false,
+            benefitsCount: 0,
+            missionCount: 0,
+            startDate: '',
+            endDate: '',
+            validateDates() {
+                const start = new Date(this.startDate);
+                const end = new Date(this.endDate);
+                return !this.startDate || !this.endDate || start <= end;
+            }
+        }">
+            <form method="post" action="{% url 'campaigns:create' %}"
+                  @submit="submitting = true"
+                  data-loading="true">
                 {% csrf_token %}
 
                 <div class="modal-header">
@@ -18,35 +31,74 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="id_recruitment_start_date" class="form-label">모집 시작일 <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="id_recruitment_start_date" name="recruitment_start_date" required>
+                            <input type="date"
+                                   class="form-control"
+                                   id="id_recruitment_start_date"
+                                   name="recruitment_start_date"
+                                   required
+                                   x-model="startDate">
                         </div>
                         <div class="col-md-6">
                             <label for="id_recruitment_end_date" class="form-label">모집 종료일 <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="id_recruitment_end_date" name="recruitment_end_date" required>
+                            <input type="date"
+                                   class="form-control"
+                                   id="id_recruitment_end_date"
+                                   name="recruitment_end_date"
+                                   required
+                                   x-model="endDate"
+                                   :class="{ 'is-invalid': !validateDates() }">
+                            <div class="invalid-feedback" x-show="!validateDates()">
+                                종료일은 시작일 이후여야 합니다.
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="id_recruitment_count" class="form-label">모집 인원 <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" id="id_recruitment_count" name="recruitment_count" min="1" required>
+                        <small class="form-text text-muted">최소 1명 이상</small>
                     </div>
 
                     <div class="mb-3">
                         <label for="id_benefits" class="form-label">제공 혜택 <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="id_benefits" name="benefits" rows="4" required></textarea>
-                        <small class="form-text text-muted">예: 무료 식사 제공, 리뷰 작성비 지급 등</small>
+                        <textarea class="form-control"
+                                  id="id_benefits"
+                                  name="benefits"
+                                  rows="4"
+                                  required
+                                  maxlength="1000"
+                                  @input="benefitsCount = $event.target.value.length"></textarea>
+                        <div class="form-text d-flex justify-content-between">
+                            <span>예: 무료 식사 제공, 리뷰 작성비 지급 등</span>
+                            <span x-text="benefitsCount + ' / 1000'"></span>
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="id_mission" class="form-label">미션 <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="id_mission" name="mission" rows="4" required></textarea>
-                        <small class="form-text text-muted">예: 인스타그램 스토리 2개 이상 업로드, 블로그 리뷰 작성 등</small>
+                        <textarea class="form-control"
+                                  id="id_mission"
+                                  name="mission"
+                                  rows="4"
+                                  required
+                                  maxlength="1000"
+                                  @input="missionCount = $event.target.value.length"></textarea>
+                        <div class="form-text d-flex justify-content-between">
+                            <span>예: 인스타그램 스토리 2개 이상 업로드, 블로그 리뷰 작성 등</span>
+                            <span x-text="missionCount + ' / 1000'"></span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="submit" class="btn btn-primary">등록하기</button>
+                    <button type="submit" class="btn btn-primary" :disabled="submitting || !validateDates()">
+                        <span x-show="!submitting">등록하기</span>
+                        <span x-show="submitting">
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            등록 중...
+                        </span>
+                    </button>
                 </div>
             </form>
         </div>
