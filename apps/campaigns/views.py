@@ -84,20 +84,18 @@ class CampaignCreateView(AdvertiserRequiredMixin, View):
 
 class HomeView(TemplateView):
     """
-    홈 페이지를 렌더링하는 View
+    랜딩 페이지 (홈 페이지)
 
-    - 상단 배너: 가장 최근 등록된 모집 중인 체험단 1개
-    - 목록: 모집 중인 전체 체험단 (최신순)
+    - Hero Section: 플랫폼 소개 및 CTA
+    - 모집 중인 체험단 목록: 최신순
+    - 플랫폼 특징 및 이용 방법 안내
     """
     template_name = 'campaigns/home.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 상단 배너용 데이터
-        context['featured_campaign'] = PublicCampaignSelector.get_latest_recruiting_campaign()
-
-        # 목록용 데이터
+        # 모집 중인 체험단 목록
         context['campaigns'] = PublicCampaignSelector.get_recruiting_campaigns()
 
         return context
