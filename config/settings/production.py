@@ -6,11 +6,10 @@ For Railway deployment.
 from .base import *
 from decouple import config
 
-DEBUG = False
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-# ALLOWED_HOSTS: Split by comma, strip whitespace, and add Railway domains
-allowed_hosts = config('ALLOWED_HOSTS', default='*').split(',')
-ALLOWED_HOSTS = [host.strip() for host in allowed_hosts]
+# ALLOWED_HOSTS: Allow all hosts by default for Railway
+ALLOWED_HOSTS = ['*']
 
 # Database Configuration
 # Railway provides DATABASE_URL when PostgreSQL is added
@@ -41,7 +40,12 @@ else:
         }
     }
 
-# Security settings
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# Security settings - Disabled for Railway deployment
+# Enable these in production with proper domain setup
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+# Static files
+STATIC_ROOT = '/app/staticfiles'
+STATIC_URL = '/static/'
