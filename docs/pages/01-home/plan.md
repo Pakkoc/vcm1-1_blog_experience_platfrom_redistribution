@@ -11,8 +11,9 @@
 
 ### 1.1 목표
 - 서비스의 첫인상을 결정하는 랜딩 페이지를 구현한다.
-- 가장 최근에 등록된 체험단 1개를 상단 배너에 고정 노출한다.
+- Hero 섹션을 통해 플랫폼의 가치를 명확히 전달한다.
 - 현재 모집 중인 전체 체험단 목록을 최신순으로 노출한다.
+- 플랫폼 특징과 이용 방법을 소개하여 사용자의 이해를 돕는다.
 - 모든 사용자(비로그인, 인플루언서, 광고주)가 접근 가능하다.
 
 ### 1.2 참고 문서
@@ -24,8 +25,11 @@
 
 ### 1.3 범위
 - **포함 사항**:
-  - 상단 배너: 가장 최근 등록된 체험단 1개 강조 표시
+  - Hero 섹션: 플랫폼 소개, CTA 버튼, Unsplash 이미지
   - 모집 중인 체험단 목록 (카드 형태)
+  - 플랫폼 특징 섹션 (3개 카드: 빠른 매칭, 검증된 파트너, 효과적인 홍보)
+  - 이용 방법 섹션 (광고주/인플루언서 가이드)
+  - 하단 CTA 섹션 (비로그인 사용자 대상)
   - 기본 정렬: 최신순 (created_at DESC)
   - 비로그인/로그인 상태 모두 동일한 콘텐츠 노출
   - Bootstrap 카드 컴포넌트를 활용한 반응형 UI
@@ -34,7 +38,6 @@
   - 검색 기능 (MVP 범위 외)
   - 필터링 기능 (MVP 범위 외)
   - 무한 스크롤 (일반 페이지네이션도 현재 단계에서는 제외, 전체 목록 노출)
-  - 추천 로직 (단순 최신순만 적용)
   - 체험단 좋아요/북마크 기능
 
 ---
@@ -66,11 +69,6 @@
 
 ### 3.2 사용할 쿼리
 ```python
-# 상단 배너용: 가장 최근 등록된 모집 중인 체험단 1개
-Campaign.objects.filter(
-    status='recruiting'
-).select_related('advertiser').order_by('-created_at').first()
-
 # 목록용: 모집 중인 전체 체험단 (최신순)
 Campaign.objects.filter(
     status='recruiting'
@@ -85,7 +83,7 @@ Campaign.objects.filter(
 
 ### 3.4 N+1 쿼리 방지
 - `select_related('advertiser')` 사용하여 광고주 정보를 한 번에 조회
-- 쿼리 수: 1개 (배너용) + 1개 (목록용) = 총 2개의 쿼리로 완료
+- 쿼리 수: 1개 (목록용)
 
 ---
 
@@ -109,18 +107,6 @@ Campaign.objects.filter(
    from ..models import Campaign
 
    class CampaignSelector:
-       @staticmethod
-       def get_latest_recruiting_campaign() -> Optional[Campaign]:
-           """
-           상단 배너에 노출할 가장 최근 등록된 모집 중인 체험단 1개를 조회한다.
-
-           Returns:
-               Campaign 인스턴스 또는 None (모집 중인 캠페인이 없는 경우)
-           """
-           return Campaign.objects.filter(
-               status='recruiting'
-           ).select_related('advertiser').order_by('-created_at').first()
-
        @staticmethod
        def get_recruiting_campaigns() -> QuerySet[Campaign]:
            """
@@ -226,20 +212,18 @@ Campaign.objects.filter(
 
    class HomeView(TemplateView):
        """
-       홈 페이지를 렌더링하는 View
+       랜딩 페이지 (홈 페이지)
 
-       - 상단 배너: 가장 최근 등록된 모집 중인 체험단 1개
-       - 목록: 모집 중인 전체 체험단 (최신순)
+       - Hero Section: 플랫폼 소개 및 CTA
+       - 모집 중인 체험단 목록: 최신순
+       - 플랫폼 특징 및 이용 방법 안내
        """
        template_name = 'campaigns/home.html'
 
        def get_context_data(self, **kwargs):
            context = super().get_context_data(**kwargs)
 
-           # 상단 배너용 데이터
-           context['featured_campaign'] = CampaignSelector.get_latest_recruiting_campaign()
-
-           # 목록용 데이터
+           # 모집 중인 체험단 목록
            context['campaigns'] = CampaignSelector.get_recruiting_campaigns()
 
            return context
@@ -305,16 +289,6 @@ Campaign.objects.filter(
            response = client.get(reverse('campaigns:home'))
            assert 'campaigns/home.html' in [t.name for t in response.templates]
 
-       def test_home_view_includes_featured_campaign_in_context(self, client):
-           """상단 배너용 featured_campaign이 컨텍스트에 포함된다"""
-           advertiser = AdvertiserFactory()
-           campaign = CampaignFactory(advertiser=advertiser, status='recruiting')
-
-           response = client.get(reverse('campaigns:home'))
-
-           assert 'featured_campaign' in response.context
-           assert response.context['featured_campaign'] == campaign
-
        def test_home_view_includes_campaigns_list_in_context(self, client):
            """모집 중인 캠페인 목록이 컨텍스트에 포함된다"""
            advertiser = AdvertiserFactory()
@@ -336,7 +310,6 @@ Campaign.objects.filter(
 **Acceptance Tests**:
 - [x] 홈 URL ('/')에 접근 시 200 응답
 - [x] 올바른 템플릿 사용
-- [x] featured_campaign 컨텍스트 존재
 - [x] campaigns 리스트 컨텍스트 존재
 - [x] 비로그인 사용자도 접근 가능
 
@@ -431,38 +404,24 @@ Campaign.objects.filter(
    {% block title %}홈 - 체험단 매칭 플랫폼{% endblock %}
 
    {% block content %}
-   <div class="row">
-       <div class="col-12">
-           <h1 class="mb-4">모집 중인 체험단</h1>
-       </div>
-   </div>
-
-   <!-- 상단 배너: 가장 최근 등록된 체험단 -->
-   {% if featured_campaign %}
-   <div class="row mb-5">
-       <div class="col-12">
-           <div class="card border-primary shadow-lg">
-               <div class="card-header bg-primary text-white">
-                   <h5 class="mb-0">최신 체험단</h5>
+   <!-- Hero Section -->
+   <section class="hero-section py-5 mb-5">
+       <div class="container">
+           <div class="row align-items-center">
+               <div class="col-lg-6 text-center text-lg-start">
+                   <h1 class="display-4 fw-bold mb-3">광고주와 인플루언서를 연결하는<br>체험단 매칭 플랫폼</h1>
+                   <p class="lead mb-4">손쉽게 체험단을 등록하고, 다양한 체험 기회를 발견하세요</p>
+                   <!-- CTA buttons -->
                </div>
-               <div class="card-body">
-                   <h4 class="card-title">{{ featured_campaign.name }}</h4>
-                   <p class="card-text">
-                       <strong>광고주:</strong> {{ featured_campaign.advertiser.company_name }}<br>
-                       <strong>모집 인원:</strong> {{ featured_campaign.recruitment_count }}명<br>
-                       <strong>모집 기간:</strong>
-                       {{ featured_campaign.recruitment_start_date|date:"Y.m.d" }} ~
-                       {{ featured_campaign.recruitment_end_date|date:"Y.m.d" }}
-                   </p>
-                   <p class="card-text">{{ featured_campaign.benefits|truncatewords:30 }}</p>
-                   <a href="#" class="btn btn-primary btn-lg">자세히 보기</a>
+               <div class="col-lg-6 mt-4 mt-lg-0">
+                   <img src="https://images.unsplash.com/photo-1552581234-26160f608093?w=600&h=400&fit=crop"
+                        alt="팀워크" class="img-fluid rounded shadow-lg">
                </div>
            </div>
        </div>
-   </div>
-   {% endif %}
+   </section>
 
-   <!-- 체험단 목록 -->
+   <!-- 현재 모집 중인 체험단 섹션 -->
    <div class="row">
        {% if campaigns %}
            {% for campaign in campaigns %}
@@ -526,7 +485,9 @@ Campaign.objects.filter(
    ```
 
 **Acceptance Tests** (수동 UI 검증):
-- [x] 상단 배너가 눈에 띄게 표시됨 (border-primary, shadow-lg)
+- [x] Hero 섹션이 눈에 띄게 표시됨 (그라데이션 배경, CTA 버튼)
+- [x] 플랫폼 특징 섹션 3개 카드 표시 (이미지 포함)
+- [x] 이용 방법 섹션 2개 카드 표시 (광고주/인플루언서)
 - [x] 체험단 목록이 카드 형태로 그리드 레이아웃 표시
 - [x] 반응형 디자인: 모바일에서는 1열, 태블릿 2열, 데스크탑 3열
 - [x] 모집 중인 캠페인이 없을 경우 Empty State 메시지 표시
@@ -587,9 +548,11 @@ Campaign.objects.filter(
 
            # Then
            assert response.status_code == 200
-           assert '세 번째 캠페인' in response.content.decode('utf-8')
-           assert '두 번째 캠페인' in response.content.decode('utf-8')
-           assert '첫 번째 캠페인' in response.content.decode('utf-8')
+           content = response.content.decode('utf-8')
+           assert '세 번째 캠페인' in content
+           assert '두 번째 캠페인' in content
+           assert '첫 번째 캠페인' in content
+           assert '광고주와 인플루언서를 연결하는' in content  # Hero section
 
        def test_visitor_sees_empty_state_when_no_campaigns(self):
            """
@@ -683,7 +646,6 @@ templates/
 **home.html에서 사용하는 컨텍스트**:
 ```python
 {
-    'featured_campaign': Campaign 인스턴스 or None,  # 상단 배너용
     'campaigns': QuerySet[Campaign],                 # 목록용
     'user': User 인스턴스 or AnonymousUser           # Django 기본 제공
 }
@@ -766,13 +728,12 @@ templates/
 
 ### 10.1 최적화 목표
 - 홈 페이지 로딩 시간: 1초 이내 (SQLite 기준)
-- 데이터베이스 쿼리 수: 최대 2개
-  - 쿼리 1: featured_campaign 조회
-  - 쿼리 2: campaigns 목록 조회
+- 데이터베이스 쿼리 수: 1개
+  - 쿼리 1: campaigns 목록 조회
 
 ### 10.2 쿼리 최적화
 - `select_related('advertiser')` 사용하여 N+1 쿼리 방지
-- `first()`와 일반 QuerySet으로 분리하여 쿼리 2개로 제한
+- 단일 QuerySet으로 쿼리 1개로 제한
 
 ### 10.3 캐싱 전략 (MVP 단계 제외)
 - 향후 Redis 도입 시 홈 페이지 캐싱 고려
@@ -868,9 +829,9 @@ templates/
 
 ### A. 의사결정 기록
 
-**결정 1: 배너와 목록을 별도 쿼리로 분리**
-- 이유: 배너는 `first()`, 목록은 전체 QuerySet이 필요하여 한 번의 쿼리로 처리 불가
-- 대안: 목록에서 첫 번째 항목을 배너로 재사용 → 기각 (PRD에서 "고정 노출" 요구)
+**결정 1: 최신 체험단 배너 제거 및 랜딩 페이지 구성**
+- 이유: 서비스 가치 전달을 위해 Hero 섹션, 플랫폼 특징, 이용 방법 등으로 구성
+- 대안: featured_campaign 제거하고 단일 QuerySet으로 쿼리 최적화
 
 **결정 2: 페이지네이션 미구현**
 - 이유: MVP 단계에서는 데이터량이 적어 전체 목록 노출로 충분
@@ -879,6 +840,10 @@ templates/
 **결정 3: 검색/필터 기능 제외**
 - 이유: PRD에서 명시적으로 MVP 범위 외로 규정
 - 대안: 없음 (우선순위 낮음)
+
+**결정 4: Unsplash 이미지 사용**
+- 이유: MVP 단계에서 빠른 프로토타입을 위해 무료 placeholder 이미지 사용
+- 대안: 추후 실제 서비스 이미지로 교체 예정
 
 ### B. 리스크 및 대응 방안
 
