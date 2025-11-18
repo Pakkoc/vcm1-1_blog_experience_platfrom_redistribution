@@ -29,9 +29,18 @@ if database_url:
         )
     }
 else:
-    # SQLite Fallback
-    db_path = config('DATABASE_PATH', default='/tmp/db.sqlite3')
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    # SQLite Fallback with Railway Volume support
+    # Railway 볼륨 마운트 경로 (1단계에서 설정한 Mount Path와 일치해야 함)
+    VOLUME_MOUNT_PATH = '/data'
+
+    # Railway 환경(볼륨이 마운트된 환경)인지 확인하여 경로를 동적으로 결정
+    if os.path.exists(VOLUME_MOUNT_PATH):
+        # Railway 볼륨 경로 사용 (영구 저장)
+        db_path = os.path.join(VOLUME_MOUNT_PATH, 'db.sqlite3')
+    else:
+        # 로컬 또는 볼륨 없는 환경 - 임시 경로 사용
+        db_path = config('DATABASE_PATH', default='/tmp/db.sqlite3')
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
 
     DATABASES = {
         'default': {
